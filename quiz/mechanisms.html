@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engineering Mechanisms Quiz</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 28px;
+    }
+    
+    h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .question-count {
+      font-weight: 500;
+    }
+    
+    .timer {
+      background-color: #e5f0fd;
+      color: #2c70d9;
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-weight: 500;
+    }
+    
+    .btn {
+      display: inline-block;
+      background-color: #3182ce;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
+    }
+    
+    .btn:hover {
+      background-color: #2c70d9;
+    }
+    
+    .btn:disabled {
+      background-color: #cbd5e0;
+      color: #718096;
+      cursor: not-allowed;
+    }
+    
+    .btn-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .start-screen, .score-screen {
+      text-align: center;
+    }
+    
+    .start-screen p, .score-screen p {
+      margin-bottom: 16px;
+    }
+    
+    .score {
+      font-size: 36px;
+      font-weight: bold;
+      color: #3182ce;
+      margin: 10px 0;
+    }
+    
+    .answer-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .answer-option {
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .answer-option:hover:not(.correct):not(.incorrect) {
+      border-color: #a0aec0;
+    }
+    
+    .answer-option.selected {
+      border-color: #3182ce;
+      background-color: #ebf4ff;
+    }
+    
+    .answer-option.correct {
+      border-color: #38a169;
+      background-color: #c6f6d5;
+    }
+    
+    .answer-option.incorrect {
+      border-color: #e53e3e;
+      background-color: #fed7d7;
+    }
+    
+    .explanation {
+      margin-top: 20px;
+      padding: 16px;
+      background-color: #ebf8ff;
+      border: 1px solid #bee3f8;
+      border-radius: 6px;
+      display: none;
+    }
+    
+    .explanation-title {
+      font-weight: 600;
+      color: #2b6cb0;
+      margin-bottom: 8px;
+    }
+    
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+      
+      .btn {
+        padding: 10px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Engineering Mechanisms Quiz</h1>
+    
+    <!-- Start Screen -->
+    <div id="start-screen" class="start-screen">
+      <p>Test your knowledge about engineering mechanisms with this 10-question quiz.</p>
+      <p>You'll have 30 seconds to answer each question.</p>
+      <div class="btn-container">
+        <button id="start-btn" class="btn">Start Quiz</button>
+      </div>
+    </div>
+    
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" style="display: none;">
+      <div class="quiz-header">
+        <div id="question-count" class="question-count">Question 1/10</div>
+        <div id="timer" class="timer">Time: 30s</div>
+      </div>
+      
+      <h2 id="question-text"></h2>
+      
+      <div id="answer-options" class="answer-options"></div>
+      
+      <div id="explanation" class="explanation">
+        <div class="explanation-title">Explanation:</div>
+        <div id="explanation-text"></div>
+      </div>
+      
+      <div class="btn-container">
+        <button id="check-btn" class="btn" disabled>Check Answer</button>
+        <button id="next-btn" class="btn" style="display: none;">Next Question</button>
+      </div>
+    </div>
+    
+    <!-- Score Screen -->
+    <div id="score-screen" class="score-screen" style="display: none;">
+      <h2>Quiz Complete!</h2>
+      <p>Your score:</p>
+      <div id="score" class="score">0 out of 10</div>
+      <p id="score-message"></p>
+      <div class="btn-container">
+        <button id="restart-btn" class="btn">Restart Quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Quiz data
+    const questions = [
+      {
+        questionText: 'According to this <a href="https://en.wikipedia.org/wiki/Mechanism_(engineering)" target="_blank">wiki page</a>, what is a mechanism in engineering?',
+        answerOptions: [
+          { answerText: 'A device that generates energy', isCorrect: false },
+          { answerText: 'A device that transforms input forces and movement into desired output forces and movement', isCorrect: true },
+          { answerText: 'A collection of simple machines only', isCorrect: false },
+          { answerText: 'Any mechanical component in a system', isCorrect: false },
+        ],
+        explanation: 'A mechanism is a device that transforms input forces and movement into a desired set of output forces and movement.'
+      },
+      {
+        questionText: 'Who defined a machine as "a combination of resistant bodies so arranged that by their means the mechanical forces of nature can be compelled to do work accompanied by certain determinate motion"?',
+        answerOptions: [
+          { answerText: 'Archimedes', isCorrect: false },
+          { answerText: 'Franz Reuleaux', isCorrect: true },
+          { answerText: 'J. Phillips', isCorrect: false },
+          { answerText: 'Theo Jansen', isCorrect: false },
+        ],
+        explanation: 'German scientist Franz Reuleaux provided this definition of a machine, which is generally interpreted to mean mechanism in this context.'
+      },
+      {
+        questionText: 'What did Reuleaux call the ideal connections between links?',
+        answerOptions: [
+          { answerText: 'Mechanical joints', isCorrect: false },
+          { answerText: 'Kinematic pairs', isCorrect: true },
+          { answerText: 'Link connections', isCorrect: false },
+          { answerText: 'Force transmitters', isCorrect: false },
+        ],
+        explanation: 'Reuleaux called the ideal connections between links kinematic pairs. He distinguished between higher pairs and lower pairs.'
+      },
+      {
+        questionText: 'How many degrees of freedom does a spherical joint or ball joint have?',
+        answerOptions: [
+          { answerText: '1', isCorrect: false },
+          { answerText: '2', isCorrect: false },
+          { answerText: '3', isCorrect: true },
+          { answerText: '6', isCorrect: false },
+        ],
+        explanation: 'A spherical joint (ball joint) requires that a point in the moving body maintain contact with a point in the fixed body. This joint has three degrees of freedom.'
+      },
+      {
+        questionText: 'What is a kinematic diagram in the context of mechanisms?',
+        answerOptions: [
+          { answerText: 'A detailed engineering drawing showing all components', isCorrect: false },
+          { answerText: 'A skeleton diagram that emphasizes joints and reduces links to simple geometric elements', isCorrect: true },
+          { answerText: 'A mathematical representation of forces', isCorrect: false },
+          { answerText: 'A computer simulation of mechanism movement', isCorrect: false },
+        ],
+        explanation: 'A kinematic diagram reduces machine components to a skeleton diagram that emphasizes the joints and reduces the links to simple geometric elements.'
+      },
+      {
+        questionText: 'What characterizes a planar mechanism?',
+        answerOptions: [
+          { answerText: 'All components move in three dimensions', isCorrect: false },
+          { answerText: 'All point trajectories are parallel or in series connection to a plane', isCorrect: true },
+          { answerText: 'Only rotational movement is allowed', isCorrect: false },
+          { answerText: 'Components must be physically attached to a plane', isCorrect: false },
+        ],
+        explanation: 'A planar mechanism is one where the movement of individual components is constrained so that all point trajectories are parallel or in a series connection to a plane.'
+      },
+      {
+        questionText: 'What is an example of a spherical mechanism?',
+        answerOptions: [
+          { answerText: 'Four-bar linkage', isCorrect: false },
+          { answerText: 'Gimbaled gyroscope', isCorrect: true },
+          { answerText: 'Slider-crank', isCorrect: false },
+          { answerText: 'Watt\'s linkage', isCorrect: false },
+        ],
+        explanation: 'The gimbaled gyroscope is an example of a spherical mechanism, where point trajectories in all components lie in concentric spherical shells around a fixed point.'
+      },
+      {
+        questionText: 'What famous linkage did James Watt design that was critical to his steam engine?',
+        answerOptions: [
+          { answerText: 'Peaucellier linkage', isCorrect: false },
+          { answerText: 'Sarrus linkage', isCorrect: false },
+          { answerText: 'Watt\'s linkage', isCorrect: true },
+          { answerText: 'Klann linkage', isCorrect: false },
+        ],
+        explanation: 'Watt\'s linkage is a four-bar linkage that generates an approximate straight line. It was critical to the operation of his design for the steam engine.'
+      },
+      {
+        questionText: 'What are the advantages of compliant mechanisms?',
+        answerOptions: [
+          { answerText: 'Higher manufacturing costs but better performance', isCorrect: false },
+          { answerText: 'Reduced part-count, reduced "slop," energy storage, low maintenance', isCorrect: true },
+          { answerText: 'Better heat dissipation and noise reduction', isCorrect: false },
+          { answerText: 'Higher load capacity but limited motion range', isCorrect: false },
+        ],
+        explanation: 'Compliant mechanisms have many advantages, including reduced part-count, reduced "slop" between joints, energy storage, low maintenance, and ease of manufacture.'
+      },
+      {
+        questionText: 'In a cam and follower mechanism, what determines the movement of the mechanism?',
+        answerOptions: [
+          { answerText: 'The weight of the cam', isCorrect: false },
+          { answerText: 'The rotational speed only', isCorrect: false },
+          { answerText: 'The shape of the contacting surfaces of the cam and follower', isCorrect: true },
+          { answerText: 'The material of the components', isCorrect: false },
+        ],
+        explanation: 'The shape of the contacting surfaces of the cam and follower determines the movement of the mechanism.'
+      },
+    ];
+
+    // DOM elements
+    const startScreen = document.getElementById('start-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const scoreScreen = document.getElementById('score-screen');
+    const startBtn = document.getElementById('start-btn');
+    const checkBtn = document.getElementById('check-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const questionCount = document.getElementById('question-count');
+    const timerElement = document.getElementById('timer');
+    const questionText = document.getElementById('question-text');
+    const answerOptions = document.getElementById('answer-options');
+    const explanation = document.getElementById('explanation');
+    const explanationText = document.getElementById('explanation-text');
+    const scoreElement = document.getElementById('score');
+    const scoreMessage = document.getElementById('score-message');
+
+    // Quiz state
+    let currentQuestion = 0;
+    let score = 0;
+    let selectedAnswer = null;
+    let timerInterval = null;
+    let timeLeft = 30;
+
+    // Event listeners
+    startBtn.addEventListener('click', startQuiz);
+    checkBtn.addEventListener('click', checkAnswer);
+    nextBtn.addEventListener('click', nextQuestion);
+    restartBtn.addEventListener('click', restartQuiz);
+
+    // Functions
+    function startQuiz() {
+      startScreen.style.display = 'none';
+      quizScreen.style.display = 'block';
+      loadQuestion();
+      startTimer();
+    }
+
+    function loadQuestion() {
+      // Update question count
+      questionCount.textContent = `Question ${currentQuestion + 1}/${questions.length}`;
+      
+      // Set question text using innerHTML to allow HTML links
+      questionText.innerHTML = questions[currentQuestion].questionText;
+      
+      // Clear previous answer options
+      answerOptions.innerHTML = '';
+      
+      // Add answer options
+      questions[currentQuestion].answerOptions.forEach((option, index) => {
+        const answerOption = document.createElement('div');
+        answerOption.className = 'answer-option';
+        answerOption.textContent = option.answerText;
+        answerOption.dataset.index = index;
+        answerOption.addEventListener('click', selectAnswer);
+        answerOptions.appendChild(answerOption);
+      });
+      
+      // Reset state
+      selectedAnswer = null;
+      checkBtn.disabled = true;
+      explanation.style.display = 'none';
+      
+      // Reset and start timer
+      timeLeft = 30;
+      timerElement.textContent = `Time: ${timeLeft}s`;
+    }
+
+    function selectAnswer(e) {
+      // Remove previous selection
+      const options = document.querySelectorAll('.answer-option');
+      options.forEach(option => option.classList.remove('selected'));
+      
+      // Set new selection
+      e.target.classList.add('selected');
+      selectedAnswer = parseInt(e.target.dataset.index);
+      
+      // Enable check button
+      checkBtn.disabled = false;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerElement.textContent = `Time: ${timeLeft}s`;
+        
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          checkAnswer();
+        }
+      }, 1000);
+    }
+
+    function checkAnswer() {
+      // Stop timer
+      clearInterval(timerInterval);
+      
+      // Get answer options
+      const options = document.querySelectorAll('.answer-option');
+      
+      // Highlight correct and incorrect answers
+      options.forEach((option, index) => {
+        const isSelected = parseInt(option.dataset.index) === selectedAnswer;
+        const isCorrect = questions[currentQuestion].answerOptions[index].isCorrect;
+        
+        if (isCorrect) {
+          option.classList.add('correct');
+        } else if (isSelected) {
+          option.classList.add('incorrect');
+        }
+        
+        // Disable clicking
+        option.removeEventListener('click', selectAnswer);
+      });
+      
+      // Update score if correct
+      if (selectedAnswer !== null && questions[currentQuestion].answerOptions[selectedAnswer].isCorrect) {
+        score++;
+      }
+      
+      // Show explanation
+      explanationText.textContent = questions[currentQuestion].explanation;
+      explanation.style.display = 'block';
+      
+      // Show next button, hide check button
+      checkBtn.style.display = 'none';
+      nextBtn.style.display = 'inline-block';
+      
+      // If time ran out and no answer was selected
+      if (selectedAnswer === null) {
+        // Maybe show a message that time ran out
+      }
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      
+      if (currentQuestion < questions.length) {
+        // Load next question
+        loadQuestion();
+        startTimer();
+        
+        // Show check button, hide next button
+        checkBtn.style.display = 'inline-block';
+        nextBtn.style.display = 'none';
+      } else {
+        // Show score screen
+        showScore();
+      }
+    }
+
+    function showScore() {
+      quizScreen.style.display = 'none';
+      scoreScreen.style.display = 'block';
+      
+      // Set score
+      scoreElement.textContent = `${score} out of ${questions.length}`;
+      
+      // Set message based on score
+      if (score === questions.length) {
+        scoreMessage.textContent = "Perfect score! Excellent knowledge of mechanisms!";
+      } else if (score >= questions.length * 0.7) {
+        scoreMessage.textContent = "Great job! You have a solid understanding of mechanisms.";
+      } else if (score >= questions.length * 0.5) {
+        scoreMessage.textContent = "Good effort! You know the basics of mechanisms.";
+      } else {
+        scoreMessage.textContent = "Keep learning about mechanisms to improve your score!";
+      }
+    }
+
+    function restartQuiz() {
+      // Reset state
+      currentQuestion = 0;
+      score = 0;
+      selectedAnswer = null;
+      
+      // Show start screen
+      scoreScreen.style.display = 'none';
+      startScreen.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
